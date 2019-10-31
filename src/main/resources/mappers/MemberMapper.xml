@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.member.IMemberMapper">
+    <sql id="searchWhere">
+        <where>
+            <if test="userName != null and userName != ''">
+                userName like concat ('%',#{userName},'%')
+            </if>
+            <if test="realName != null and realName != ''">
+               and realName like concat ('%',#{realName},'%')
+            </if>
+            <if test="minBirthday != null">
+                and birthday > #{minBirthday}
+            </if>
+            <if test="maxBirthday != null and maxBirthday > minBirthday">
+                and birthday &lt; #{maxBirthday}
+            </if>
+            <if test="area1 != null and area1 > 0">
+                and area1 = #{area1}
+            </if>
+            <if test="area2 != null and area2 > 0">
+                and area2 = #{area2}
+            </if>
+            <if test="area3 != null and area3 > 0">
+                and area3 = #{area3}
+            </if>
+        </where>
+    </sql>
+
+    <select id="findCount" parameterType="com.fh.shop.admin.param.member.MemberParam" resultType="long">
+        select count(*) from t_member
+        <include refid="searchWhere"></include>
+    </select>
+    <select id="findPageMemberList" parameterType="com.fh.shop.admin.param.member.MemberParam" resultType="com.fh.shop.admin.po.member.Member">
+        select t.* from
+        (select m.id,userName,realName,birthday,phone,email,concat(a1.areaName,'-->',a2.areaName,'-->',a3.areaName) "areaName"from t_member m
+        left join t_area a1 on m.area1 = a1.id
+        left join t_area a2 on m.area2 = a2.id
+        left join t_area a3 on m.area3 = a3.id
+        <include refid="searchWhere"></include>
+          order by id desc
+        ) t
+        limit #{start},#{length}
+    </select>
+</mapper>

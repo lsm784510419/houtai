@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.brand.IBrandMapper">
+
+    <select id="findBrandCount" resultType="long">
+        select count(*) from t_brand
+    </select>
+    <select id="findPageBrandList" parameterType="com.fh.shop.admin.po.brand.Brand" resultType="com.fh.shop.admin.po.brand.Brand">
+        select id,brandName,brandImg,isHot,isSort from t_brand
+        order by isHot desc,isSort desc
+        limit #{start},#{length}
+    </select>
+    <insert id="addBrand" parameterType="com.fh.shop.admin.po.brand.Brand">
+        insert into t_brand (brandName,brandImg,isSort,isHot) values (#{brandName},#{brandImg},#{isSort},#{isHot})
+    </insert>
+    <delete id="deleteBrand" parameterType="int">
+        delete from t_brand where id=#{id}
+    </delete>
+
+    <select id="findUpdateBrand" parameterType="int" resultType="com.fh.shop.admin.po.brand.Brand">
+        select id,brandName,brandImg,isHot from t_brand where id=#{id}
+    </select>
+    <update id="updateBrand" parameterType="com.fh.shop.admin.po.brand.Brand">
+        update t_brand set brandName=#{brandName},brandImg=#{brandImg},isHot=#{isHot}
+        where id=#{id}
+    </update>
+</mapper>

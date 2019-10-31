@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.shop.IShopMapper">
+    <sql id="searchWhere">
+        <where>
+            <if test="shopName != null and shopName != ''">
+                shopName like concat ('%',#{shopName},'%')
+            </if>
+            <if test="minPrice != null and minPrice>0">
+                and price > #{minPrice}
+            </if>
+            <if test="maxPrice != null and maxPrice>minPrice">
+                and price &lt;#{maxPrice}
+            </if>
+            <if test="minDate != null">
+                and shopTime > #{minDate}
+            </if>
+            <if test="maxDate != null and maxDate>minDate">
+                and shopTime &lt;#{maxDate}
+            </if>
+        </where>
+    </sql>
+    <select id="findShopCount" resultType="long" parameterType="com.fh.shop.admin.param.user.ParamSearchUser">
+        select count(*) from t_shop
+        <include refid="searchWhere"></include>
+    </select>
+    <select id="findPageShopList" resultType="com.fh.shop.admin.po.shop.Shop" parameterType="com.fh.shop.admin.param.user.ParamSearchUser">
+        select t.* from
+        (select id,shopName,price,shopImg,shopTime,stock,isHotCakes,isUp from t_shop
+        <include refid="searchWhere"></include>
+        order by id desc ) t
+        limit #{start},#{length}
+    </select>
+    <insert id="addShop" parameterType="com.fh.shop.admin.po.shop.Shop">
+        insert into t_shop (shopName,price,shopImg,shopTime,stock,isHotCakes) values (#{shopName},#{price},#{shopImg},#{shopTime},#{stock},#{isHotCakes})
+    </insert>
+    <delete id="deleteShop" parameterType="int">
+        delete from t_shop where id=#{value}
+    </delete>
+    <select id="findUpdateShop" parameterType="int" resultType="com.fh.shop.admin.po.shop.Shop">
+        select id,shopName,price,shopImg,shopTime,stock,isHotCakes from t_shop where id=#{value}
+    </select>
+    <update id="updateShop" parameterType="com.fh.shop.admin.po.shop.Shop">
+        update t_shop set shopName=#{shopName},price=#{price},shopTime=#{shopTime},shopImg=#{shopImg},stock=#{stock},isHotCakes=#{isHotCakes}
+        where id=#{id}
+    </update>
+    <!--查询状态-->
+    <select id="findIsUp" parameterType="long" resultType="int">
+        select isUp from t_shop where id=#{value}
+    </select>
+    <!--修改状态-->
+    <update id="updateIsUp">
+        update t_shop set isup=#{isUp} where id=#{id}
+    </update>
+
+    <!--导出用的查询-->
+    <select id="findexportShop" parameterType="com.fh.shop.admin.param.shop.ParamSearchShop" resultType="com.fh.shop.admin.po.shop.Shop">
+
+        select id,shopName,price,shopImg,shopTime,stock,isHotCakes,isUp from t_shop
+        <include refid="searchWhere"></include>
+        order by id desc
+    </select>
+</mapper>

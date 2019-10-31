@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.user.IUserMapper">
+
+    <sql id="searchWhere">
+        <where>
+            <if test="userName != null and userName != ''">
+                userName like concat ('%',#{userName},'%')
+            </if>
+            <if test="realName != null and realName != ''">
+                and realName like concat ('%',#{realName},'%')
+            </if>
+            <if test="minAge != null and minAge>=0">
+                and age > #{minAge}
+            </if>
+            <if test="maxAge != null and maxAge>minAge">
+                and age &lt;#{maxAge}
+            </if>
+            <if test="minPrice != null and minPrice>=0">
+                and price >#{minPrice}
+            </if>
+            <if test="maxPrice != null and maxPrice>minPrice">
+                and price&lt;#{maxPrice}
+            </if>
+            <if test="minEntryDate != null">
+                and entryDate>#{minEntryDate}
+            </if>
+            <if test="maxEntryDate != null and maxEntryDate>minEntryDate">
+                and entryDate &lt;#{maxEntryDate}
+            </if>
+            <if test="area1 != null and area1 > 0">
+                and area1 = #{area1}
+            </if>
+            <if test="area2 != null and area2 > 0">
+                and area2 = #{area2}
+            </if>
+            <if test="area3 != null and area3 > 0">
+                and area3 = #{area3}
+            </if>
+            <if test="roleListSize>0">
+                and u.id in (
+                select tur.userId from t_user_role tur where
+                tur.roleId in
+                <foreach collection="roleList" item="roleId" open="(" close=")" separator=",">
+                  #{roleId}
+                </foreach>
+                group by userId
+                having count(*) = #{roleListSize}
+                )
+            </if>
+        </where>
+    </sql>
+    <insert id="addUser" parameterType="com.fh.shop.admin.po.user.User">
+
+      <selectKey keyProperty="id" resultType="long" order="AFTER">
+          select last_insert_id();
+      </selectKey>
+        insert into t_user (userName,realName,salt,password,sex,age,phone,email,price,entryDate,userImg,area1,area2,area3)
+        values (#{userName},#{realName},#{salt},#{password},#{sex},#{age},#{phone},#{email},#{price},#{entryDate},#{userImg},#{area1},#{area2},#{area3})
+    </insert>
+    <!--维护中间表-->
+    <insert id="addUserRole" parameterType="com.fh.shop.admin.po.userrole.UserRole">
+        insert into t_user_role (userId,roleId) values (#{userId},#{roleId})
+    </insert>
+
+    <select id="findUserCount" resultType="long" parameterType="com.fh.shop.admin.param.user.ParamSearchUser">
+        select count(*) from t_user u
+        <include refid="searchWhere"></include>
+    </select>
+    <select id="findUserList" parameterType="com.fh.shop.admin.param.user.ParamSearchUser" resultType="com.fh.shop.admin.po.user.User">
+        select t.* from
+        (select u.id,userName,realName,sex,age,phone,email,price,entryDate,userImg,loginErrorCount,concat(a1.areaName,'-->',a2.areaName,'-->',a3.areaName) "areaName" from t_user u
+        left join t_area a1 on u.area1 = a1.id
+        left join t_area a2 on u.area2 = a2.id
+        left join t_area a3 on u.area3 = a3.id
+        <include refid="searchWhere"></include>
+        order by u.id desc) t
+        limit #{start},#{length}
+
+    </select>
+    <!--查询角色的名称  需要角色和中间表联查-->
+    <select id="findUserRoleList" parameterType="long" resultType="string">
+        select tr.roleName from t_role tr left join t_user_role tur on tr.id=tur.roleId
+        where tur.userId=#{value}
+    </select>
+
+    <!--根据userid查询中间表的roleid-->
+   <select id="findRoleIdList" parameterType="long" resultType="int">
+        select roleId from t_user_role where userId=#{value}
+    </select>
+    <!--删除选中行-->
+    <delete id="deleteUser" parameterType="long">
+        delete from t_user where id=#{id}
+    </delete>
+
+    <!--删除中间表-->
+    <delete id="deleteUserRole" parameterType="long">
+        delete from t_user_role where userId=#{value}
+    </delete>
+
+    <select id="findUserUpdate" parameterType="long" resultType="com.fh.shop.admin.po.user.User">
+        select u.id,userName,realName,password,sex,age,phone,email,price,entryDate,userImg,salt,area1,area2,area3,concat(a1.areaName,'-->',a2.areaName,'-->',a3.areaName) "areaName" from t_user u
+        left join t_area a1 on u.area1 = a1.id
+        left join t_area a2 on u.area2 = a2.id
+        left join t_area a3 on u.area3 = a3.id
+        where u.id=#{v}
+    </select>
+    <update id="updateUser" parameterType="com.fh.shop.admin.po.user.User">
+        update t_user set userName=#{userName},realName=#{realName},
+        sex=#{sex},age=#{age},phone=#{phone},email=#{email},price=#{price},entryDate=#{entryDate},
+        userImg=#{userImg},area1=#{area1},area2=#{area2},area3=#{area3}
+        where id=#{id}
+    </update>
+
+    <delete id="deleteBatchUser" parameterType="long">
+        delete from t_user where id in
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteUserRoles" parameterType="long">
+        delete from t_user_role where userId in
+        <foreach collection="list" separator="," item="id" open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--登陆用-->
+    <select id="login" parameterType="string" resultType="com.fh.shop.admin.po.user.User">
+        select id,userName,salt,realName,password,sex,age,phone,email,price,entryDate,userImg,loginTime,loginCount,loginErrorCount,loginErrorDate from t_user where userName= #{userName}
+    </select>
+    <!--修改登陆时间-->
+    <update id="updateLoginTime">
+        update t_user set loginTime=#{currDate} where id=#{id}
+    </update>
+    <!--重新设置登陆次数-->
+    <update id="resetLoginCount">
+        update t_user set loginCount=1 where id=#{v}
+    </update>
+    <!--修改登陆次数-->
+    <update id="updateLoginCount" parameterType="long">
+        update t_user set loginCount=loginCount+1 where id=#{id}
+    </update>
+    <!--修改登陆错误时间以及登陆次数+1-->
+    <update id="updateErrorLoginInfo">
+        update t_user set loginErrorDate = #{currDate},loginErrorCount = loginErrorCount+1 where id=#{userId}
+    </update>
+    <!--修改登陆错误时间以及登陆次数重置为1-->
+    <update id="resetErrorLogin">
+         update t_user set loginErrorDate = #{currDate},loginErrorCount = 1 where id=#{userId}
+    </update>
+    <!--重置登陆次数为0-->
+    <update id="updateErrorLoginCount" parameterType="long">
+        update t_user set loginErrorCount = 0 where id=#{v}
+    </update>
+    <!--修改登陆时间-->
+    <update id="updateErrorLoginDate">
+        update t_user set loginErrorDate = #{currDate} where id=#{userId}
+    </update>
+    <!--修改密码-->
+    <update id="updatePassword" parameterType="com.fh.shop.admin.param.user.UserParam">
+        update t_user set password=#{newPassword} where id=#{userId}
+    </update>
+    <!--重置密码-->
+    <update id="resetPassword">
+        update t_user set password=#{pass} where id=#{id}
+    </update>
+    <!--找回密码的查询-->
+    <select id="findEmail" parameterType="string" resultType="com.fh.shop.admin.po.user.User">
+        select id,userName,realName,password,sex,age,phone,email,price,entryDate,userImg,salt from t_user where email=#{v}
+    </select>
+    <!--验证邮箱-->
+    <select id="verifyUserName" parameterType="string" resultType="com.fh.shop.admin.po.user.User">
+        select id,userName,realName,password,sex,age,phone,email,price,entryDate,userImg,salt from t_user where userName=#{v}
+    </select>
+    <!--excel动态导出-->
+    <select id="findexportUser" parameterType="com.fh.shop.admin.param.user.ParamSearchUser" resultType="com.fh.shop.admin.po.user.User">
+        select u.id,userName,realName,sex,age,phone,email,price,entryDate,userImg,loginErrorCount,concat(a1.areaName,'-->',a2.areaName,'-->',a3.areaName) "areaName" from t_user u
+        left join t_area a1 on u.area1 = a1.id
+        left join t_area a2 on u.area2 = a2.id
+        left join t_area a3 on u.area3 = a3.id
+        <include refid="searchWhere"></include>
+        order by u.id desc
+    </select>
+</mapper>

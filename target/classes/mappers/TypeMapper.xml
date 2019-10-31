@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.type.ITypeMapper">
+<insert id="addType" parameterType="com.fh.shop.admin.po.type.Type">
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
+        select last_insert_id()
+    </selectKey>
+    insert into t_type (typeName,pid) values(#{typeName},#{pid})
+</insert>
+
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.menu.IMenuMapper">
+
+    <select id="findMenuList" resultType="com.fh.shop.admin.po.menu.Menu">
+        select id,menuName,fatherId,menuUrl,menuType from t_menu
+    </select>
+    <insert id="addMenu" parameterType="com.fh.shop.admin.po.menu.Menu">
+      <selectKey keyProperty="id" resultType="long" order="AFTER">
+          select last_insert_id()
+      </selectKey>
+        insert into t_menu (menuName,fatherId,menuType,menuUrl) values(#{menuName},#{fatherId},#{menuType},#{menuUrl})
+    </insert>
+    <update id="updateMenu" parameterType="com.fh.shop.admin.po.menu.Menu">
+        update t_menu set menuName=#{menuName},menuType=#{menuType},menuUrl=#{menuUrl} where id=#{id}
+    </update>
+    <delete id="deleteMenu" parameterType="long">
+        delete from t_menu where id in
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+        #{id}
+       </foreach>
+    </delete>
+    <delete id="deleteRoleMenu" parameterType="long">
+        delete from t_role_menu where menuId in
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="findUrl" resultType="com.fh.shop.admin.po.menu.Menu">
+     select tm.*from t_menu tm left join t_role_menu trm on tm.id=trm.menuId
+     left join t_user_role tur on tur.roleId=trm.roleId
+     where tur.userId=#{id} and tm.menuType=1
+     group by tm.id
+    </select>
+    <select id="findMenuTypeOr2" resultType="com.fh.shop.admin.po.menu.Menu">
+     select tm.*from t_menu tm left join t_role_menu trm on tm.id=trm.menuId
+     left join t_user_role tur on tur.roleId=trm.roleId
+     where tur.userId=#{id}
+     group by tm.id
+    </select>
+</mapper>

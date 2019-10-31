@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.log.ILogMapper">
+    <sql id="searchWhere">
+        <where>
+            <if test="userName != null and userName != ''">
+                userName like concat ('%',#{userName},'%')
+            </if>
+            <if test="realName != null and realName != ''">
+               and realName like concat ('%',#{realName},'%')
+            </if>
+            <if test="status !=null">
+                and status = #{status}
+            </if>
+            <if test="info != null and info != ''">
+                and info like concat('%',#{info},'%')
+            </if>
+            <if test="minCurrDate != null">
+                and currDate > #{minCurrDate}
+            </if>
+            <if test="maxCurrDate != null and maxCurrDate > minCurrDate">
+                and currDate &lt; #{maxCurrDate}
+            </if>
+            <if test="content != null and content != ''">
+                and content like concat('%',#{content},'%')
+            </if>
+        </where>
+    </sql>
+<insert id="addLog" parameterType="com.fh.shop.admin.po.log.LogInfo">
+    insert into t_log (userName,realName,currDate,info,status,errorMsg,detail,content)
+    values (#{userName},#{realName},#{currDate},#{info},#{status},#{errorMsg},#{detail},#{content})
+</insert>
+
+    <select id="findPageCount" parameterType="com.fh.shop.admin.param.log.ParamSearchLog" resultType="long">
+        select count(*) from t_log
+        <include refid="searchWhere"></include>
+    </select>
+    <select id="findPageLogList" parameterType="com.fh.shop.admin.param.log.ParamSearchLog" resultType="com.fh.shop.admin.po.log.LogInfo">
+        select t.* from
+        (select id,userName,realName,currDate,info,status,errorMsg,detail,content from t_log
+        <include refid="searchWhere"></include>
+          order by id desc
+        ) t
+        limit #{start},#{length}
+    </select>
+</mapper>

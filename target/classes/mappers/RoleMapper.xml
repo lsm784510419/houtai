@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.role.IRoleMapper">
+
+    <select id="findRoleCount" resultType="long">
+        select count(*) from t_role
+    </select>
+    <select id="findRoleList" parameterType="com.fh.shop.admin.po.role.Role" resultType="com.fh.shop.admin.po.role.Role">
+        select id,roleName from t_role
+        limit #{start},#{length}
+    </select>
+
+    <select id="findRole" resultType="com.fh.shop.admin.po.role.Role">
+        select id,roleName from t_role
+    </select>
+    <!--新增角色-->
+    <insert id="addRole" parameterType="com.fh.shop.admin.po.role.Role">
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            select last_insert_id()
+        </selectKey>
+        insert into t_role (roleName) values(#{roleName})
+    </insert>
+    <!--新增中间表-->
+    <insert id="addRoleMenu" parameterType="com.fh.shop.admin.po.RoleMenu">
+        insert into t_role_menu (roleId,menuId) values
+        <foreach collection="list" item="roleMenu" separator=",">
+            (#{roleMenu.roleId},#{roleMenu.menuId})
+        </foreach>
+    </insert>
+    <delete id="deleteRole" parameterType="long">
+        delete from t_role where id=#{value}
+    </delete>
+    <select id="findUpdateRole" parameterType="long" resultType="com.fh.shop.admin.po.role.Role">
+        select id,roleName from t_role where id=#{id}
+    </select>
+    <update id="updateRole" parameterType="com.fh.shop.admin.po.role.Role">
+        update t_role set roleName=#{roleName} where id=#{id}
+    </update>
+    <select id="findUpdateRoleMenu" parameterType="long" resultType="long">
+        select menuId from t_role_menu where roleId = #{value}
+    </select>
+    <delete id="deleteRoleMenu" parameterType="long">
+        delete from t_role_menu where roleId =#{roleId}
+
+    </delete>
+    <delete id="deleteUserRole" parameterType="long">
+        delete from t_user_role where roleId in (#{value})
+    </delete>
+</mapper>

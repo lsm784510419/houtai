@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+					<!--对应mapper接口的全路径-->
+<mapper namespace="com.fh.shop.admin.mapper.product.IProductMapper">
+
+    <sql id="searchWhere">
+        <where>
+            <if test="productName != null and productName != '' ">
+                proName like concat('%',#{productName},'%')
+            </if>
+            <if test="minPrice != null and minPrice>0">
+                and price >= #{minPrice}
+            </if>
+            <if test="maxPrice != null and maxPrice>minPrice">
+                and price &lt;#{maxPrice}
+            </if>
+            <if test="minCreateDate != null">
+              and createDate >= #{minCreateDate}
+            </if>
+            <if test="maxCreateDate != null">
+                and createDate &lt; #{maxCreateDate}
+            </if>
+            <if test="brandId > 0">
+                and brandId = #{brandId}
+            </if>
+            <if test="cate1 != null and cate1 > 0">
+                and cate1 = #{cate1}
+            </if>
+            <if test="cate2 != null and cate2 > 0">
+                and cate2 = #{cate2}
+            </if>
+            <if test="cate3 != null and cate3 > 0">
+                and cate3 = #{cate3}
+            </if>
+        </where>
+    </sql>
+<select id="findCount" parameterType="com.fh.shop.admin.param.product.ProductParam" resultType="long">
+    select count(*) from t_product
+    <include refid="searchWhere"></include>
+</select>
+    <select id="findPageProductList" parameterType="com.fh.shop.admin.param.product.ProductParam" resultType="com.fh.shop.admin.po.product.Product">
+        select t.* from
+        (select p.id,proName,price,stock,createDate,status,b.brandName,brandId,proImg,concat(t1.typeName,'-->',t2.typeName,'-->',t3.typeName) cateName from t_product p
+        left join t_brand b on p.brandId = b.id
+        left join t_type t1 on p.cate1 = t1.id
+        left join t_type t2 on p.cate2 = t2.id
+        left join t_type t3 on p.cate3 = t3.id
+        <include refid="searchWhere"></include>
+        order by id desc) t
+        limit #{start},#{length}
+    </select>
+    <select id="findCateName" parameterType="long" resultType="string">
+        select concat(t1.typeName,'-->',t2.typeName,'-->',t3.typeName) cateName from t_product p
+        left join t_type t1 on p.cate1 = t1.id
+        left join t_type t2 on p.cate2 = t2.id
+        left join t_type t3 on p.cate3 = t3.id
+        where p.id=#{value}
+    </select>
+
+    <select id="findexportProduct" parameterType="com.fh.shop.admin.param.product.ProductParam" resultType="com.fh.shop.admin.po.product.Product">
+        select p.id,proName,price,createDate,status,b.brandName,brandId,proImg,concat(t1.typeName,'-->',t2.typeName,'-->',t3.typeName) cateName from t_product p
+        left join t_brand b on p.brandId = b.id
+        left join t_type t1 on p.cate1 = t1.id
+        left join t_type t2 on p.cate2 = t2.id
+        left join t_type t3 on p.cate3 = t3.id
+        <include refid="searchWhere"></include>
+        order by id desc
+    </select>
+</mapper>
